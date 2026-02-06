@@ -7,3 +7,5 @@ faiss-cpu
 pypdf
 transformers
 torch
+huggingface-hub
+accelerate
