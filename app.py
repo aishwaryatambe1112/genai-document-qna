@@ -1,7 +1,7 @@
 import streamlit as st
 from langchain_community.vectorstores import FAISS
 from langchain_community.embeddings import HuggingFaceEmbeddings
-from langchain.llms import HuggingFaceHub
+from langchain_community.llms import HuggingFaceEndpoint
 from langchain.chains import RetrievalQA
 from langchain_community.document_loaders import PyPDFLoader
 from langchain.text_splitter import RecursiveCharacterTextSplitter
@@ -104,15 +104,11 @@ else:
     st.info("Upload a PDF to begin.")
     st.stop()
 
-llm = HuggingFaceHub(
+llm = HuggingFaceEndpoint(
     repo_id="google/flan-t5-base",
-    task="text-generation",
-    model_kwargs={
-        "temperature": 0.3,
-        "max_length": 512
-    }
+    temperature=0.3,
+    max_new_tokens=512
 )
-
 
 qa_chain = RetrievalQA.from_chain_type(
     llm=llm,
