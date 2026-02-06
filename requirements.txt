@@ -12,3 +12,8 @@ accelerate
 pytesseract
 pillow
 pdf2image
+unstructured
+unstructured[pdf]
+pytesseract
+pillow
+pdf2image
