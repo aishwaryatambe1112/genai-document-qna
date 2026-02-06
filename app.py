@@ -81,8 +81,9 @@ if uploaded_file:
         f.write(uploaded_file.read())
 
     with st.spinner("Processing document..."):
-        loader = UnstructuredPDFLoader("temp.pdf")
+        loader = PyPDFLoader("temp.pdf")
         documents = loader.load()
+
 
 
 
