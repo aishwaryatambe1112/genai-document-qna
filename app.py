@@ -101,7 +101,17 @@ else:
     st.info("Upload a PDF to begin.")
     st.stop()
 
-qa_model = pipeline("question-answering")
+llm = HuggingFaceHub(
+    repo_id="google/flan-t5-base",
+    model_kwargs={"temperature":0.3, "max_length":512}
+)
+
+qa_chain = RetrievalQA.from_chain_type(
+    llm=llm,
+    retriever=db.as_retriever(search_kwargs={"k":3})
+
+)
+
 
 if "chat" not in st.session_state:
     st.session_state.chat = []
@@ -110,11 +120,9 @@ query = st.text_input("💬 Ask your question")
 
 if query:
     with st.spinner("Thinking..."):
-        docs = db.similarity_search(query, k=2)
-        context = " ".join([d.page_content for d in docs])
+        answer = qa_chain.run(query)
+        st.session_state.chat.append((query, answer))
 
-        result = qa_model(question=query, context=context)
-        st.session_state.chat.append((query, result["answer"]))
 
 # ---------- Chat History ----------
 for q, a in reversed(st.session_state.chat):
