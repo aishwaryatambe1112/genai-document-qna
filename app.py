@@ -81,7 +81,7 @@ if uploaded_file:
         f.write(uploaded_file.read())
 
     with st.spinner("Processing document..."):
-        loader = PyPDFLoader("temp.pdf")
+        loader = UnstructuredPDFLoader("temp.pdf")
         documents = loader.load()
 
 
@@ -112,7 +112,6 @@ llm = HuggingFaceHub(
     }
 )
 
-)
 
 qa_chain = RetrievalQA.from_chain_type(
     llm=llm,
