@@ -9,3 +9,6 @@ transformers
 torch
 huggingface-hub
 accelerate
+pytesseract
+pillow
+pdf2image
