@@ -1,69 +1,80 @@
 import streamlit as st
-import os
 from langchain_community.vectorstores import FAISS
 from langchain_community.embeddings import HuggingFaceEmbeddings
+from transformers import pipeline
 from langchain_community.document_loaders import PyPDFLoader
 from langchain.text_splitter import RecursiveCharacterTextSplitter
-from transformers import pipeline
+import os
 
-# ---------------- PAGE CONFIG ----------------
 st.set_page_config(page_title="Smart Document Q&A", layout="centered")
 
-# ---------------- CSS ----------------
+# ---------- Custom CSS ----------
 st.markdown("""
 <style>
+
 body {
     background: linear-gradient(120deg, #f3f6ff, #eef1ff);
 }
 
 .big-title {
-    font-size:56px;
+    font-size:56px !important;
     font-weight:900;
     text-align:center;
-    color:white;
+    color:#1f1f2e;
+    margin-bottom:5px;
 }
 
 .sub {
     text-align:center;
-    color:#cfcfe8;
+    color:#5c5f7a;
     font-size:18px;
-    margin-bottom:30px;
+    margin-bottom:35px;
 }
 
 .answer-box {
     background:#1f1f2e;
     color:white;
-    padding:20px;
-    border-radius:12px;
+    padding:22px;
+    border-radius:14px;
     margin-top:10px;
+    box-shadow:0px 6px 15px rgba(0,0,0,0.2);
     font-size:20px;
+    animation: fadeIn 0.5s ease-in;
 }
 
 .question {
     font-weight:700;
     font-size:22px;
-    color:#4cc9f0;
-    margin-top:20px;
+    color:#3a0ca3;
+    margin-top:25px;
 }
+
+@keyframes fadeIn {
+    from {opacity:0; transform:translateY(10px);}
+    to {opacity:1; transform:translateY(0);}
+}
+
+.stTextInput>div>div>input {
+    border-radius:12px;
+    padding:14px;
+    font-size:18px;
+}
+
+.sidebar .sidebar-content {
+    background:#f7f8ff;
+}
+
 </style>
 """, unsafe_allow_html=True)
 
-# ---------------- TITLE ----------------
+# ---------- Title ----------
 st.markdown('<div class="big-title">📄 SMART DOCUMENT Q&A</div>', unsafe_allow_html=True)
-st.markdown('<div class="sub">Retrieval Augmented Generative AI</div>', unsafe_allow_html=True)
+st.markdown('<div class="sub">Ask questions from your documents using Generative AI</div>', unsafe_allow_html=True)
 
-# ---------------- SIDEBAR ----------------
-st.sidebar.header("📂 Upload PDF")
-uploaded_file = st.sidebar.file_uploader("Choose document", type=["pdf"])
+# ---------- Sidebar ----------
+st.sidebar.markdown("### 📂 Upload PDF")
+uploaded_file = st.sidebar.file_uploader("Choose a document", type=["pdf"])
 
-# ---------------- LOAD MODEL ----------------
-@st.cache_resource
-def load_llm():
-    return pipeline("text2text-generation", model="google/flan-t5-base")
-
-generator = load_llm()
-
-# ---------------- PROCESS PDF ----------------
 if uploaded_file:
     with open("temp.pdf", "wb") as f:
         f.write(uploaded_file.read())
@@ -79,44 +90,32 @@ if uploaded_file:
         db = FAISS.from_documents(docs, embeddings)
         db.save_local("vectorstore")
 
-    st.sidebar.success("Document indexed!")
+    st.sidebar.success("Document ready!")
 
-# ---------------- LOAD VECTORSTORE ----------------
-if not os.path.exists("vectorstore"):
-    st.info("Upload a PDF to start.")
+# ---------- Load Vector DB ----------
+if os.path.exists("vectorstore"):
+    embeddings = HuggingFaceEmbeddings(model_name="sentence-transformers/all-MiniLM-L6-v2")
+    db = FAISS.load_local("vectorstore", embeddings, allow_dangerous_deserialization=True)
+else:
+    st.info("Upload a PDF to begin.")
     st.stop()
 
-embeddings = HuggingFaceEmbeddings(model_name="sentence-transformers/all-MiniLM-L6-v2")
-db = FAISS.load_local("vectorstore", embeddings, allow_dangerous_deserialization=True)
+qa_model = pipeline("question-answering")
 
-# ---------------- CHAT ----------------
 if "chat" not in st.session_state:
     st.session_state.chat = []
 
 query = st.text_input("💬 Ask your question")
 
 if query:
-    with st.spinner("Generating answer..."):
-
-        docs = db.similarity_search(query, k=3)
+    with st.spinner("Thinking..."):
+        docs = db.similarity_search(query, k=2)
         context = " ".join([d.page_content for d in docs])
 
-        prompt = f"""
-Answer the question using ONLY the context below.
+        result = qa_model(question=query, context=context)
+        st.session_state.chat.append((query, result["answer"]))
 
-Context:
-{context}
-
-Question:
-{query}
-"""
-
-        response = generator(prompt, max_length=300)
-        answer = response[0]["generated_text"]
-
-        st.session_state.chat.append((query, answer))
-
-# ---------------- DISPLAY CHAT ----------------
+# ---------- Chat History ----------
 for q, a in reversed(st.session_state.chat):
     st.markdown(f"<div class='question'>You: {q}</div>", unsafe_allow_html=True)
     st.markdown(f"<div class='answer-box'>{a}</div>", unsafe_allow_html=True)
