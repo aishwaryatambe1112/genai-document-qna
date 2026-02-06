@@ -1,4 +1,5 @@
 import streamlit as st
+from langchain_community.document_loaders import UnstructuredPDFLoader
 from langchain_community.vectorstores import FAISS
 from langchain_community.embeddings import HuggingFaceEmbeddings
 from langchain.llms import HuggingFaceHub
@@ -81,8 +82,9 @@ if uploaded_file:
         f.write(uploaded_file.read())
 
     with st.spinner("Processing document..."):
-        loader = PyPDFLoader("temp.pdf")
+        loader = UnstructuredPDFLoader("temp.pdf")
         documents = loader.load()
+
 
         splitter = RecursiveCharacterTextSplitter(chunk_size=500, chunk_overlap=50)
         docs = splitter.split_documents(documents)
