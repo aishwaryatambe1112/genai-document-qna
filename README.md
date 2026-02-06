@@ -2,7 +2,7 @@
 # Smart Document Q&A System (GenAI Mini Project)
 
 AI-powered application that allows users to upload PDF documents and ask questions using semantic search and transformer models.
-Live Demo: https://genai-document-qna-nn8ddfbkynofpgpndbs8db.streamlit.app/
+# Live Demo: https://genai-document-qna-nn8ddfbkynofpgpndbs8db.streamlit.app/
 
 ## Features
 - PDF text extraction
