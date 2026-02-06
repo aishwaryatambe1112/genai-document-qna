@@ -105,12 +105,18 @@ else:
 
 llm = HuggingFaceHub(
     repo_id="google/flan-t5-base",
-    model_kwargs={"temperature":0.3, "max_length":512}
+    task="text-generation",
+    model_kwargs={
+        "temperature": 0.3,
+        "max_length": 512
+    }
+)
+
 )
 
 qa_chain = RetrievalQA.from_chain_type(
     llm=llm,
-    retriever=db.as_retriever(search_kwargs={"k":3})
+    retriever=db.as_retriever()
 
 )
 
